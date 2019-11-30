@@ -15,7 +15,6 @@ public class Server extends Thread {
     private String[] usernames = new String[maxConnections];
 
     private boolean[] activeChatConnections = new boolean[maxConnections];
-    private boolean[] activeFileConnections = new boolean[maxConnections];
 
     private Thread[] chat = new Thread[maxConnections];
 
@@ -36,7 +35,7 @@ public class Server extends Thread {
 
             while (connections < chat.length) {
                 try {
-                    System.out.println("Waiting for clients on port " + serverSocket.getLocalPort() + "/" + serverFileSocket.getLocalPort() + "...");
+//                    System.out.println("Waiting for clients on port " + serverSocket.getLocalPort() + "/" + serverFileSocket.getLocalPort() + "...");
                     chatServer = serverSocket.accept();
                     fileServer = serverFileSocket.accept();
 
@@ -48,13 +47,12 @@ public class Server extends Thread {
                             initConnection(i);
                             chat[i].start();
                             activeChatConnections[i] = true;
-                            activeFileConnections[i] = true;
                             break;
                         }
                     }
 
                     connections++;
-                    System.out.println(connections + " connections");
+//                    System.out.println(connections + " connections");
 
                 } catch (SocketTimeoutException s) {
                     System.out.println("Socket timed out!");
@@ -105,7 +103,7 @@ public class Server extends Thread {
                                 }
                             }finally {
                                 if(id != -1 && activeChatConnections[id]){
-                                    out[id].writeUTF("You have been kicked from the chatServer");
+                                    out[id].writeUTF("You have been kicked from the server");
                                     in[id].close();
                                 }else{
                                     System.out.println("Cannot find user");
@@ -244,7 +242,7 @@ public class Server extends Thread {
                     distributeMessage(message, usernames[id], id);
 
                 } catch (IOException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                     System.out.println(usernames[id] + "(" + ip + ") has disconnected");
                     activeChatConnections[id] = false;
                     connections--;
@@ -256,7 +254,7 @@ public class Server extends Thread {
                         connection.close();
                         return;
                     } catch (IOException ex) {
-                        ex.printStackTrace();
+//                        ex.printStackTrace();
                     }
                 }
             }

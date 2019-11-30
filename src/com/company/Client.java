@@ -3,6 +3,7 @@ package com.company;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Scanner;
@@ -26,84 +27,13 @@ public class Client extends Thread{
         int filePort = 25564;
 
         System.out.println("Enter username");
-        Scanner input;// = new Scanner(System.in);
-//        username = input.nextLine();
+        Scanner input = new Scanner(System.in);
+        username = input.nextLine();
 
-        username = "ok";
+//        username = "ok";
 
         connectToHost(serverName, chatPort, filePort);
         connect.start();
-
-
-        receieveMessages = new Thread(() -> {
-            while (running) {
-                try {
-                    String message = in.readUTF();
-                    System.out.println(message);
-                } catch (IOException e) {
-                    System.out.println(e.getLocalizedMessage());
-                    running = false;
-                    break;
-                }
-            }
-
-            try {
-                chatClient.close();
-            } catch (IOException e) {
-                System.out.println("socket already closed?");
-            }
-
-            if(isConnectionActive){
-                connectToHost(serverName, chatPort, filePort);
-                connect.start();
-
-            }
-        });
-
-        receiveFiles = new Thread(() -> {
-            while(running) {
-                try {
-                    String filename = fileIn.readUTF();
-                    int filesize = Integer.parseInt(fileIn.readUTF());
-
-                    System.out.println("Downloading file " + filename + "(" + filesize + " bytes)");
-
-                    File receivedFile = new File("c:/skickis/" + filename);
-                    receivedFile.getParentFile().mkdirs();
-
-//                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(receivedFile));
-
-                    FileOutputStream fileOutputStream = new FileOutputStream(receivedFile);
-
-                    int read;
-                    int totalRead = 0;
-                    int remaining = filesize;
-
-                    byte[] buffer = new byte[8*1024]; // or 4096, or more
-
-                    Instant start = Instant.now();
-                    while ((read = fileIn.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
-                        totalRead += read;
-                        remaining -= read;
-                        fileOutputStream.write(buffer, 0, read);
-                    }
-
-                    Instant finish = Instant.now();
-
-                    long timeElapsed = Duration.between(start, finish).toMillis();
-                    double timeElapsedDecimal = (double)timeElapsed/1000;
-
-                    System.out.println("File " + filename + " downloaded to " + receivedFile.getAbsolutePath() + "(" + totalRead + " bytes, " + timeElapsedDecimal + " seconds, " + (filesize/timeElapsedDecimal)/1000000 + " MB/s");
-                    fileOutputStream.close();
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    running = false;
-                    break;
-                }
-            }
-        });
-
 
 
         while (true) {
@@ -145,7 +75,9 @@ public class Client extends Thread{
                 e.printStackTrace();
             }
         }
+
     }
+
 
     private void connectToHost(String serverName, int chatPort, int filePort){
         connect = new Thread(() -> {
@@ -153,10 +85,10 @@ public class Client extends Thread{
                     System.out.println("Connecting to " + serverName + " on port " + chatPort + "/" + filePort);
 
                     chatClient = new Socket(serverName, chatPort);
-                    System.out.println("Just connected to " + chatClient.getRemoteSocketAddress());
+//                    System.out.println("connected to " + chatClient.getRemoteSocketAddress());
 
                     fileClient = new Socket(serverName, filePort);
-                    System.out.println("Just connected to " + fileClient.getRemoteSocketAddress());
+                    System.out.println("connected to " +chatClient.getRemoteSocketAddress() + "/" +  fileClient.getRemoteSocketAddress());
 
 
                     fileIn = new DataInputStream(fileClient.getInputStream());
@@ -166,7 +98,7 @@ public class Client extends Thread{
 
                     out.writeUTF(username);
 
-//                    running = true;
+                    running = true;
                     receieveMessages.start();
                     receiveFiles.start();
 
@@ -177,6 +109,79 @@ public class Client extends Thread{
                     e.printStackTrace();
                 }
             });
+
+        receieveMessages = new Thread(() -> {
+            while (running) {
+                try {
+                    String message = in.readUTF();
+                    System.out.println(message);
+                } catch (IOException e) {
+//                    System.out.println(e.getLocalizedMessage());
+                    running = false;
+                    break;
+                }
+            }
+
+            try {
+                chatClient.close();
+            } catch (IOException e) {
+                System.out.println("socket already closed?");
+            }
+
+            if(isConnectionActive){
+                connectToHost(serverName, chatPort, filePort);
+                connect.start();
+
+            }
+        });
+
+        receiveFiles = new Thread(() -> {
+            while(running) {
+                try {
+                    String filename = fileIn.readUTF();
+                    int filesize = Integer.parseInt(fileIn.readUTF());
+
+                    System.out.println("Downloading file " + filename + "(" + filesize + " bytes)");
+
+                    File receivedFile = new File("c:/skickis/" + filename);
+                    receivedFile.getParentFile().mkdirs();
+
+//                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(receivedFile));
+
+                    FileOutputStream fileOutputStream = new FileOutputStream(receivedFile);
+
+                    int read;
+                    int totalRead = 0;
+                    int remaining = filesize;
+
+                    byte[] buffer = new byte[8*1024]; // or 4096, or more
+
+                    Instant start = Instant.now();
+
+                    while ((read = fileIn.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
+                        totalRead += read;
+                        remaining -= read;
+                        fileOutputStream.write(buffer, 0, read);
+                    }
+
+                    Instant finish = Instant.now();
+
+                    long timeElapsed = Duration.between(start, finish).toMillis();
+                    double timeElapsedDecimal = (double)timeElapsed/1000;
+
+                    System.out.println("File " + filename + " downloaded to " + receivedFile.getAbsolutePath() + "(" + totalRead + " bytes, " + timeElapsedDecimal + " seconds, " + (filesize/timeElapsedDecimal)/1000000 + " MB/s");
+                    fileOutputStream.close();
+
+                } catch (SocketException se){
+                    System.out.println("Server closed");
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    running = false;
+                    break;
+                }
+            }
+        });
     }
 
     public static void main(String[] args) {
