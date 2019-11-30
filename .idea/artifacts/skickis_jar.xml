@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="skickis:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/skickis_jar</output-path>
+    <root id="archive" name="skickis.jar">
+      <element id="module-output" name="skickis" />
+    </root>
+  </artifact>
+</component>
