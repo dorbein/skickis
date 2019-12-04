@@ -15,13 +15,14 @@ public class Server extends Thread {
     private String[] usernames = new String[maxConnections];
 
     private boolean[] activeChatConnections = new boolean[maxConnections];
+//    private boolean[] activeFileConnections = new boolean[maxConnections];
 
     private Thread[] chat = new Thread[maxConnections];
 
     private DataInputStream[] in = new DataInputStream[maxConnections];
     private DataOutputStream[] out = new DataOutputStream[maxConnections];
 
-    private DataInputStream[] fileIn = new DataInputStream[maxConnections];
+//    private DataInputStream[] fileIn = new DataInputStream[maxConnections];
     private DataOutputStream[] fileOut = new DataOutputStream[maxConnections];
 
     private Server(int chatPort, int filePort) throws IOException {
@@ -35,7 +36,7 @@ public class Server extends Thread {
 
             while (connections < chat.length) {
                 try {
-//                    System.out.println("Waiting for clients on port " + serverSocket.getLocalPort() + "/" + serverFileSocket.getLocalPort() + "...");
+                    System.out.println("Waiting for clients on port " + serverSocket.getLocalPort() + "/" + serverFileSocket.getLocalPort() + "...");
                     chatServer = serverSocket.accept();
                     fileServer = serverFileSocket.accept();
 
@@ -52,16 +53,15 @@ public class Server extends Thread {
                     }
 
                     connections++;
-//                    System.out.println(connections + " connections");
+                    System.out.println(connections + " connections");
 
                 } catch (SocketTimeoutException s) {
                     System.out.println("Socket timed out!");
                 } catch (IOException e) {
-                    System.out.println("gick inte");
                     e.printStackTrace();
                 }
             }
-            System.out.println("Maxium amount of clients reached");
+            System.out.println("Maximum amount of clients reached");
         }).start();
 
         while (true) {
@@ -145,7 +145,6 @@ public class Server extends Thread {
 
                                             while ((bytesRead = fileInputStream.read(buffer)) > 0){
                                                 fileOut[id].write(buffer, 0 , bytesRead);
-//                                                System.out.println("written " + bytesRead + " bytes");
                                             }
 
                                             fileInputStream.close();
@@ -199,13 +198,12 @@ public class Server extends Thread {
             Socket connection = chatServer;
             Socket fileConnection = fileServer;
             String ip = null;
-//            String username = null;
             String message;
             try {
                 in[id] = new DataInputStream(connection.getInputStream());
                 out[id] = new DataOutputStream(connection.getOutputStream());
 
-                fileIn[id] = new DataInputStream(fileConnection.getInputStream());
+//                fileIn[id] = new DataInputStream(fileConnection.getInputStream());
                 fileOut[id] = new DataOutputStream(fileConnection.getOutputStream());
 
                 ip = connection.getRemoteSocketAddress().toString();
@@ -242,7 +240,7 @@ public class Server extends Thread {
                     distributeMessage(message, usernames[id], id);
 
                 } catch (IOException e) {
-//                    e.printStackTrace();
+                    e.printStackTrace();
                     System.out.println(usernames[id] + "(" + ip + ") has disconnected");
                     activeChatConnections[id] = false;
                     connections--;
@@ -254,7 +252,7 @@ public class Server extends Thread {
                         connection.close();
                         return;
                     } catch (IOException ex) {
-//                        ex.printStackTrace();
+                        ex.printStackTrace();
                     }
                 }
             }
