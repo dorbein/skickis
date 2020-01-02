@@ -312,7 +312,7 @@ public class Server extends Thread {
                                     users += usernames[i];
 
                                     if(i == id){
-                                        users += " (you)";
+                                        users += "(you)";
                                     }
 
                                     if(i != connections-1){
@@ -471,3 +471,4 @@ public class Server extends Thread {
         }
     }
 }
+//HJÄLP JAG FÖRSTÅR **INGET**
